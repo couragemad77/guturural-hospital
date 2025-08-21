@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Shield, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../ui/Button';
+import { Link } from 'react-router-dom';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -129,6 +130,15 @@ const LoginForm: React.FC = () => {
             Sign In
           </Button>
         </form>
+
+        <div className="text-center mt-6">
+          <p className="text-sm text-gray-400">
+            Don't have an account?{' '}
+            <Link to="/register" className="font-medium text-teal-400 hover:text-teal-300">
+              Create one
+            </Link>
+          </p>
+        </div>
 
         {/* Demo Accounts */}
         <div className="mt-8">

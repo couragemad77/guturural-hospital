@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginForm from './components/auth/LoginForm';
@@ -17,6 +17,10 @@ import PatientCheckIn from './components/staff/PatientCheckIn';
 import MyPatients from './components/staff/MyPatients';
 import Consultations from './components/staff/Consultations';
 import QueueManagement from './components/staff/QueueManagement';
+import RegistrationForm from './components/auth/RegistrationForm';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from './config/firebase';
+import { Department } from './types';
 
 const AppContent: React.FC = () => {
   const { currentUser, userRole, loading } = useAuth();
@@ -30,7 +34,13 @@ const AppContent: React.FC = () => {
   }
 
   if (!currentUser) {
-    return <LoginForm />;
+    return (
+      <Routes>
+        <Route path="/" element={<LoginForm />} />
+        <Route path="/register" element={<RegistrationForm />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    );
   }
 
   const isPatient = userRole?.role === 'patient';
@@ -114,6 +124,31 @@ const AppContent: React.FC = () => {
 };
 
 function App() {
+  useEffect(() => {
+    const seedDepartments = async () => {
+      const departmentsCollection = collection(db, 'departments');
+      const snapshot = await getDocs(departmentsCollection);
+      if (snapshot.empty) {
+        console.log('Seeding departments...');
+        const departmentsToSeed: Omit<Department, 'id'>[] = [
+          { name: 'Maternity Wing', code: 'MAT', color: '#ff69b4', icon: 'Baby' },
+          { name: 'Laboratory', code: 'LAB', color: '#3498db', icon: 'Beaker' },
+          { name: 'Pharmacy', code: 'PHARM', color: '#2ecc71', icon: 'Pill' },
+          { name: 'X-ray Department', code: 'XRAY', color: '#95a5a6', icon: 'Bone' },
+          { name: 'OPD', code: 'OPD', color: '#f1c40f', icon: 'Stethoscope' },
+          { name: 'Pediatrics', code: 'PEDS', color: '#e67e22', icon: 'HeartPulse' },
+        ];
+
+        for (const dept of departmentsToSeed) {
+          await addDoc(departmentsCollection, dept);
+        }
+        console.log('Departments seeded.');
+      }
+    };
+
+    seedDepartments().catch(console.error);
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
