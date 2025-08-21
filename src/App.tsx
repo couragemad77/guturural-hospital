@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import LandingPage from './components/LandingPage';
+import LoginForm from './components/auth/LoginForm';
 import Sidebar from './components/Layout/Sidebar';
 import TopBar from './components/Layout/TopBar';
 import PatientDashboard from './components/dashboard/PatientDashboard';
@@ -30,7 +30,7 @@ const AppContent: React.FC = () => {
   }
 
   if (!currentUser) {
-    return <LandingPage />;
+    return <LoginForm />;
   }
 
   const isPatient = userRole?.role === 'patient';
