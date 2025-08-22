@@ -22,8 +22,11 @@ import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { db } from './config/firebase';
 import { Department } from './types';
 
+import { useState } from 'react';
+
 const AppContent: React.FC = () => {
   const { currentUser, userRole, loading } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (loading) {
     return (
@@ -74,11 +77,11 @@ const AppContent: React.FC = () => {
         </div>
       ) : (
         // Staff/Admin Layout - Sidebar Navigation
-        <div className="flex">
-          <Sidebar />
-          <div className="flex-1 ml-64">
-            <TopBar showMenu={false} />
-            <main className="p-6">
+        <div className="relative min-h-screen md:flex">
+          <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+          <div className="flex-1 md:ml-64">
+            <TopBar setIsSidebarOpen={setIsSidebarOpen} />
+            <main className="p-4 md:p-6">
               <Routes>
                 <Route path="/dashboard" element={getDashboard()} />
                 <Route path="/settings" element={<SettingsPage />} />
