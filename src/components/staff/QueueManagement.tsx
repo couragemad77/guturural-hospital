@@ -162,7 +162,14 @@ const QueueManagement: React.FC = () => {
   useEffect(() => {
     const q = query(collection(db, 'queue'), orderBy('checkedInAt'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const queues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QueueItem));
+      const queues = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          checkedInAt: (data.checkedInAt as any).toDate(),
+        } as QueueItem;
+      });
       const grouped = queues.reduce((acc, item) => {
         const deptName = item.department;
         if (!acc[deptName]) acc[deptName] = [];
@@ -214,7 +221,7 @@ const QueueManagement: React.FC = () => {
               {groupedQueues[dept.name]?.length > 0 ? groupedQueues[dept.name].map(item => (
                 <div key={item.id} className="bg-gray-700 p-4 rounded-lg shadow-md border border-gray-600 hover:border-teal-500 transition-colors">
                   <p className="font-bold text-lg flex items-center"><Users className="w-5 h-5 mr-2" />{item.patientName}</p>
-                  <p className="text-sm text-gray-400 flex items-center mt-2"><Clock className="w-4 h-4 mr-2" />Checked in at: {new Date(item.checkedInAt.seconds * 1000).toLocaleTimeString()}</p>
+                  <p className="text-sm text-gray-400 flex items-center mt-2"><Clock className="w-4 h-4 mr-2" />Checked in at: {item.checkedInAt.toLocaleTimeString()}</p>
                   <div className="mt-3 flex justify-between items-center">
                     <span className={`px-2 py-1 text-xs font-bold rounded-full ${item.priority === 'urgent' ? 'bg-red-500' : item.priority === 'high' ? 'bg-yellow-500 text-black' : 'bg-blue-500'}`}>{item.priority}</span>
                     <span className="text-sm font-semibold capitalize">{item.status}</span>
