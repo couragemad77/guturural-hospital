@@ -58,7 +58,7 @@ const UserManagement: React.FC = () => {
         createdAt: new Date()
       };
 
-      await addDoc(collection(db, 'users'), userData);
+      await setDoc(doc(db, 'users', userCredential.user.uid), userData);
       await fetchUsers();
       setShowAddModal(false);
       setNewUser({ email: '', password: '', displayName: '', role: 'patient', department: '' });

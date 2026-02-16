@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import LandingPage from './components/LandingPage';
+import LoginForm from './components/auth/LoginForm';
 import Sidebar from './components/Layout/Sidebar';
 import TopBar from './components/Layout/TopBar';
 import PatientDashboard from './components/dashboard/PatientDashboard';
@@ -17,9 +17,16 @@ import PatientCheckIn from './components/staff/PatientCheckIn';
 import MyPatients from './components/staff/MyPatients';
 import Consultations from './components/staff/Consultations';
 import QueueManagement from './components/staff/QueueManagement';
+import RegistrationForm from './components/auth/RegistrationForm';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from './config/firebase';
+import { Department } from './types';
+
+import { useState } from 'react';
 
 const AppContent: React.FC = () => {
   const { currentUser, userRole, loading } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (loading) {
     return (
@@ -30,7 +37,13 @@ const AppContent: React.FC = () => {
   }
 
   if (!currentUser) {
-    return <LandingPage />;
+    return (
+      <Routes>
+        <Route path="/" element={<LoginForm />} />
+        <Route path="/register" element={<RegistrationForm />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    );
   }
 
   const isPatient = userRole?.role === 'patient';
@@ -64,11 +77,11 @@ const AppContent: React.FC = () => {
         </div>
       ) : (
         // Staff/Admin Layout - Sidebar Navigation
-        <div className="flex">
-          <Sidebar />
-          <div className="flex-1 ml-64">
-            <TopBar showMenu={false} />
-            <main className="p-6">
+        <div className="relative min-h-screen md:flex">
+          <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+          <div className="flex-1 md:ml-64">
+            <TopBar setIsSidebarOpen={setIsSidebarOpen} />
+            <main className="p-4 md:p-6">
               <Routes>
                 <Route path="/dashboard" element={getDashboard()} />
                 <Route path="/settings" element={<SettingsPage />} />
@@ -114,6 +127,31 @@ const AppContent: React.FC = () => {
 };
 
 function App() {
+  useEffect(() => {
+    const seedDepartments = async () => {
+      const departmentsCollection = collection(db, 'departments');
+      const snapshot = await getDocs(departmentsCollection);
+      if (snapshot.empty) {
+        console.log('Seeding departments...');
+        const departmentsToSeed: Omit<Department, 'id'>[] = [
+          { name: 'Maternity Wing', code: 'MAT', color: '#ff69b4', icon: 'Baby' },
+          { name: 'Laboratory', code: 'LAB', color: '#3498db', icon: 'Beaker' },
+          { name: 'Pharmacy', code: 'PHARM', color: '#2ecc71', icon: 'Pill' },
+          { name: 'X-ray Department', code: 'XRAY', color: '#95a5a6', icon: 'Bone' },
+          { name: 'OPD', code: 'OPD', color: '#f1c40f', icon: 'Stethoscope' },
+          { name: 'Pediatrics', code: 'PEDS', color: '#e67e22', icon: 'HeartPulse' },
+        ];
+
+        for (const dept of departmentsToSeed) {
+          await addDoc(departmentsCollection, dept);
+        }
+        console.log('Departments seeded.');
+      }
+    };
+
+    seedDepartments().catch(console.error);
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

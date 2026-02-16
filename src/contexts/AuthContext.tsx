@@ -12,10 +12,13 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { User } from '../types';
 
+import { Patient } from '../types';
+
 interface AuthContextType {
   currentUser: FirebaseUser | null;
   userRole: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password:string) => Promise<void>;
+  registerPatient: (patientData: Omit<Patient, 'id' | 'userId' | 'createdAt'>, password: string) => Promise<void>;
   createDemoAccount: (email: string, password: string, role: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserPassword: (newPassword: string) => Promise<void>;
@@ -143,10 +146,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
+  const registerPatient = async (patientData: Omit<Patient, 'id' | 'userId' | 'createdAt'>, password: string) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, patientData.email, password);
+    const user = userCredential.user;
+
+    const userData: User = {
+      uid: user.uid,
+      email: user.email!,
+      role: 'patient',
+      displayName: `${patientData.firstName} ${patientData.lastName}`,
+      createdAt: new Date()
+    };
+    await setDoc(doc(db, 'users', user.uid), userData);
+
+    const newPatientData = {
+      userId: user.uid,
+      ...patientData,
+      createdAt: new Date()
+    };
+    await setDoc(doc(db, 'patients', user.uid), newPatientData);
+  };
+
   const value = {
     currentUser,
     userRole,
     login,
+    registerPatient,
     createDemoAccount,
     logout,
     updateUserPassword,
